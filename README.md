@@ -35,6 +35,8 @@ backend is wired but untested.
 - **Three entry points, one core.** CLI, a small desktop window, and an MCP server so other agents can use the same
   execution layer.
 
+![BridgeAgent desktop window replaying a learned skill: page to Calculator and back, one model call](docs/images/gui.png)
+
 ## Architecture
 
 ```
