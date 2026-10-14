@@ -10,8 +10,6 @@
 
 **让 Web Agent 能操作 Windows。**
 
-![BridgeAgent 演示：网页到 Windows 计算器再回来，无 LLM 回放](docs/images/demo.gif)
-
 BridgeAgent 是一个把浏览器和 Windows 桌面当成同一个工作空间的 AI agent。网页通过 DOM 读取，原生窗口通过 Windows UI Automation 读取，两者之间的切换由程序规则判定，不由模型判定。任务可以从网页开始，进入资源管理器、计算器、对话框或任何原生应用，再回到网页。
 
 状态：alpha。Windows 11，Python 3.11 以上。用 DeepSeek（OpenAI 兼容接口）实测，Anthropic 后端已接入但未测试。
