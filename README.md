@@ -15,7 +15,7 @@ through the DOM and native windows through Windows UI Automation, and switches b
 not by the model. A task can start on a web
 page, continue in Explorer, Calculator, a dialog or any native app, and come back.
 
-Status: alpha. Windows 11, Python 3.11+. Tested with DeepSeek through an OpenAI-compatible endpoint; the Anthropic
+Status: alpha. Windows 11, Python 3.11+. Tested with DeepSeek through an OpenAI-compatible endpoint. The Anthropic
 backend is wired but untested.
 
 
@@ -25,8 +25,8 @@ backend is wired but untested.
   The model sees one accessibility tree per step and picks one action.
 - **Deterministic routing.** `focus.py` looks at the foreground window's process and class and decides which observer
   runs. Chrome dialogs drawn outside the page (print preview, permission bubbles) are found through UIA and merged in.
-- **Focus-safe execution.** If another app steals the foreground, the agent's window is brought back; keystrokes are
-  only sent when the observed window is still in front; a vanished window makes the action fail instead of leak.
+- **Focus-safe execution.** If another app steals the foreground, the agent's window is brought back. Keystrokes are
+  only sent when the observed window is still in front, and a vanished window makes the action fail instead of leak.
 - **Skills without an LLM.** A successful run is compacted into a skill. The next run replays it and spends one model
   call to verify. If the UI changed, the model takes over from the broken step and the skill is rewritten. Values copied
   from the page become variables, so a replay works on new data.
@@ -55,7 +55,7 @@ backend is wired but untested.
 ```
 
 Routing rule: the foreground window belongs to the agent's browser and uses the browser's main window class, so read the
-DOM; anything else (a native window, a dialog owned by the browser, another browser, a Chrome popup) goes through UIA.
+DOM. Anything else (a native window, a dialog owned by the browser, another browser, a Chrome popup) goes through UIA.
 Execution follows the ref prefix. The model never chooses the observer or the executor.
 
 ## Quick start
@@ -111,7 +111,7 @@ sites the agent may touch. Every action is appended to `runs/audit.jsonl`.
 
 - Windows only. Excel's cell grid exposes only visible header cells to UIA, so spreadsheet reading is not supported.
 - Chrome dialog detection relies on Chrome's view class names and may need updating across Chrome versions.
-- Skill matching is keyword overlap; parameterization covers typed text and download paths, not file choices such as
+- Skill matching is keyword overlap, and parameterization covers typed text and download paths, not file choices such as
   "the newest file".
 - Screenshot fallback for sparse trees needs a vision-capable model.
 
