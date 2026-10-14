@@ -43,7 +43,6 @@ QMainWindow, QWidget { background: #0b0d12; color: #e7e9ee; font-family: 'Segoe 
 QLabel { background: transparent; }
 QLabel#title { font-size: 22px; font-weight: 600; color: #ffffff; }
 QLabel#subtitle { color: #8a93a6; font-size: 13px; }
-QLabel#meta { color: #6b7386; font-size: 11px; }
 QLabel#section { color: #6b7386; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; }
 QFrame#card { background: #12151c; border: 1px solid #1f2430; border-radius: 14px; }
 QPlainTextEdit, QLineEdit { background: #0f1218; border: 1px solid #262c3a; border-radius: 10px; padding: 9px 11px;
@@ -121,7 +120,6 @@ class Window(QMainWindow):
         self.stop_btn.clicked.connect(self.stop)
         self._set_status("idle", "idle")
 
-        settings = load_settings()
         header = QHBoxLayout()
         titles = QVBoxLayout()
         titles.setSpacing(2)
@@ -130,8 +128,6 @@ class Window(QMainWindow):
             self._label("One task across the browser and Windows. Risky actions ask you first.", "subtitle")
         )
         header.addLayout(titles, 1)
-        header.addWidget(
-            self._label(f"{settings.provider} / {settings.model}   confirm: {settings.confirm_mode}", "meta")
         )
 
         task_card = self._card()
