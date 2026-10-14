@@ -10,6 +10,8 @@ English | [中文](README.zh-CN.md)
 
 **Give your web agent access to Windows.**
 
+![BridgeAgent demo: a web page, the Windows Calculator, and back, replayed without an LLM](docs/images/demo.gif)
+
 BridgeAgent is an AI agent that treats the browser and the Windows desktop as one workspace. It reads web pages
 through the DOM and native windows through Windows UI Automation, and switches between the two by a deterministic rule,
 not by the model. A task can start on a web
