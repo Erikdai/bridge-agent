@@ -192,7 +192,7 @@ class Window(QMainWindow):
         self.log.appendPlainText(line)
 
     def _done(self, status: str, summary: str) -> None:
-        self.status.setText(status)
+        self._set_status(status, "done" if status == "done" else "failed")
         self.log.appendPlainText(f"\n=== {status} ===\n{summary}")
         self.agent = None
         agent_module.LOG_SINK = None
