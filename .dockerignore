@@ -1,0 +1,9 @@
+.venv
+runs
+skills_store
+.env
+permissions.yaml
+docs
+tasks
+tests
+scripts
