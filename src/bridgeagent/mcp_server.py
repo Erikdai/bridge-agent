@@ -19,8 +19,10 @@ import queue
 import threading
 import time
 from pathlib import Path
+from typing import Annotated
 
 from mcp.server.mcpserver import MCPServer
+from pydantic import Field
 
 from .actions import Action, BrowserExecutor, DesktopExecutor, ExecResult, dispatch
 from .agent import DOWNLOADS_PLACEHOLDER, Agent, BrowserSession
@@ -176,9 +178,34 @@ def _run_now(action: Action) -> str:
     return line + "\n\n" + _observe()
 
 
+Ref = Annotated[
+    str,
+    Field(
+        description="Element ref from the latest observation, e.g. 'b12' for a page element or 'd7' for a native window "
+        "or dialog control. Refs are renumbered on every observation, so always use the most recent tree."
+    ),
+]
+
+
 @mcp.tool()
-def observe(start_url: str = "") -> str:
-    """Return the accessibility tree of whatever has keyboard focus. On the first call, optionally open start_url in the browser."""
+def observe(
+    start_url: Annotated[
+        str,
+        Field(
+            description="Optional URL to open in the agent's browser before observing, e.g. 'https://example.com' or a "
+            "file:// page. Leave empty to observe the current state."
+        ),
+    ] = "",
+) -> str:
+    """Read the current screen as one accessibility tree and return it as text.
+
+    Call this first, and again whenever you need fresh refs. The result starts with a SURFACE line:
+    'browser' means the tree is the web page (refs b1, b2, ...); 'desktop' means it is the native window that has
+    keyboard focus such as Explorer, Calculator, a Save dialog or a Windows prompt (refs d1, d2, ...). A Chrome dialog
+    drawn on top of the page (print preview, permission bubble) is included with d refs. Each line shows the ref, role,
+    accessible name, value and state of an element, followed by a visible-text excerpt and the files downloaded so far.
+    Nothing is clicked or changed.
+    """
 
     def body() -> str:
         _ensure(start_url or None)
@@ -191,50 +218,155 @@ def observe(start_url: str = "") -> str:
 
 
 @mcp.tool()
-def click(ref: str) -> str:
-    """Click the element with this ref (b12 = page element, d7 = native/dialog element)."""
+def click(ref: Ref) -> str:
+    """Click one element by ref: a page element through the DOM, or a native control through UI Automation.
+
+    Use for buttons, links, checkboxes, menu items, list items and tabs. Clicks on controls whose name suggests an
+    irreversible effect (Send, Pay, Delete, Submit, ...) first show the human a native confirmation box and are refused
+    if it is declined or times out. Returns a RESULT line (ok or ERROR with the reason) followed by a fresh observation,
+    so you do not need a separate observe call.
+    """
     return _run(Action(type="click", ref=ref))
 
 
 @mcp.tool()
-def type_text(text: str, ref: str = "", submit: bool = False) -> str:
-    """Type text into the element with ref, or, with no ref, send the keystrokes to the focused window (whole expressions, file names)."""
+def type_text(
+    text: Annotated[
+        str,
+        Field(
+            description="The exact text to enter, e.g. 'report-2026.csv' or a whole calculator expression such as "
+            "'1234+5678='."
+        ),
+    ],
+    ref: Annotated[
+        str,
+        Field(
+            description="Ref of the text field to fill (it is cleared first). Leave empty to send the keystrokes to "
+            "whatever currently has keyboard focus, which is right for calculators, address bars and dialogs that "
+            "already have focus."
+        ),
+    ] = "",
+    submit: Annotated[
+        bool, Field(description="Press Enter after typing, e.g. to submit a search box or confirm a file name.")
+    ] = False,
+) -> str:
+    """Enter text into a field by ref, or send keystrokes to the focused window when no ref is given.
+
+    Keystrokes are only sent if the window observed last is still in front; if focus was stolen in between, the call
+    fails with an explanation instead of typing into the wrong window. Never use this for passwords: use
+    fill_credential, which keeps the secret out of the conversation. Returns a RESULT line and a fresh observation.
+    """
     return _run(Action(type="type", ref=ref or None, text=text, submit=submit))
 
 
 @mcp.tool()
-def press(keys: str) -> str:
-    """Press one key or chord in Playwright syntax: Enter, Escape, Control+S, Alt+F4, F2."""
+def press(
+    keys: Annotated[
+        str,
+        Field(
+            description="One key or chord in Playwright syntax: 'Enter', 'Escape', 'Tab', 'F2', 'Control+S', 'Alt+F4', "
+            "'Control+Shift+S'. Not a string of characters; use type_text for that."
+        ),
+    ],
+) -> str:
+    """Press a single key or key chord in the focused window.
+
+    Chords with Control, Alt or Windows modifiers and function keys are sent at operating-system level so they reach
+    browser shortcuts and native apps; plain keys go to the page when the browser is in front. Pressing Enter while a
+    risky control is focused asks the human first. Returns a RESULT line and a fresh observation.
+    """
     return _run(Action(type="press", keys=keys))
 
 
 @mcp.tool()
-def scroll(direction: str = "down", ref: str = "") -> str:
-    """Scroll up or down, optionally over the element with ref."""
+def scroll(
+    direction: Annotated[str, Field(description="'down' or 'up'.")] = "down",
+    ref: Annotated[
+        str,
+        Field(description="Optional ref of a scrollable element to scroll over; defaults to the whole page or window."),
+    ] = "",
+) -> str:
+    """Scroll the page or the focused window to reveal more content, then return a fresh observation.
+
+    Use when the element you need is not in the tree yet; the browser observer only lists elements inside the viewport.
+    """
     return _run(Action(type="scroll", direction=direction, ref=ref or None))  # type: ignore[arg-type]
 
 
 @mcp.tool()
-def navigate(url: str) -> str:
-    """Open a URL in the agent's browser tab."""
+def navigate(
+    url: Annotated[
+        str,
+        Field(description="Absolute URL to open, e.g. 'https://example.com/login' or 'file:///C:/path/page.html'."),
+    ],
+) -> str:
+    """Open a URL in the agent's own browser tab and return the page tree once it has loaded.
+
+    Browser-only: if a native window is in front, the browser is brought back first. URLs matching the user's denied
+    patterns are refused by policy. Returns a RESULT line and a fresh observation.
+    """
     return _run(Action(type="navigate", url=url))
 
 
 @mcp.tool()
-def launch(command: str) -> str:
-    """Open an app, file, folder or URI (calc, notepad, excel, a path, ms-settings:about) and bring its window to the front."""
+def launch(
+    command: Annotated[
+        str,
+        Field(
+            description="What to open: a program name ('calc', 'notepad', 'excel'), a file or folder path "
+            "('C:\\Users\\me\\Downloads\\report.csv'), or a URI ('ms-settings:about'). Program names are resolved "
+            "like the Windows Run box."
+        ),
+    ],
+) -> str:
+    """Start a Windows app, open a file or folder with its default app, or open a URI, and bring that window to the front.
+
+    This is how a task leaves the browser: after launch, observe shows the native window with d refs. Launching
+    something that is already open only re-focuses its window. Apps, folders and files outside the user's permission
+    manifest are refused. Returns a RESULT line and a fresh observation of the new window.
+    """
     return _run(Action(type="launch", command=command))
 
 
 @mcp.tool()
 def focus_browser() -> str:
-    """Bring the agent's browser window back to the front."""
+    """Bring the agent's browser window back to the front and return the page tree.
+
+    Use after working in a native app when the next step is on the web page again, or when observe reports that
+    another application's window is in front.
+    """
     return _run(Action(type="focus_browser"))
 
 
 @mcp.tool()
-def fill_credential(site: str, ref: str = "", password_ref: str = "", submit: bool = False) -> str:
-    """Fill username and password for a site key stored in the OS keyring. The secret never passes through the model."""
+def fill_credential(
+    site: Annotated[
+        str,
+        Field(
+            description="Site key under which the user stored the credential with 'bridgeagent cred set <site>', e.g. "
+            "'company-portal'. Only keys allowed by the task or the permission manifest are accepted."
+        ),
+    ],
+    ref: Annotated[
+        str,
+        Field(
+            description="Ref of the username or email field. Optional: when empty, the field labelled user, email, "
+            "login or account is used."
+        ),
+    ] = "",
+    password_ref: Annotated[
+        str, Field(description="Ref of the password field. Optional: when empty, the field labelled password is used.")
+    ] = "",
+    submit: Annotated[
+        bool, Field(description="Press Enter in the password field afterwards to submit the login form.")
+    ] = False,
+) -> str:
+    """Fill a login form with a username and password that live in the operating-system keyring.
+
+    The secret is read by the executor and typed directly; it is never returned to you and never appears in the
+    observation. Use this instead of type_text for any password field. Works on web forms and on native login dialogs.
+    Returns a RESULT line naming the two fields that were filled, plus a fresh observation.
+    """
     return _run(
         Action(type="fill_credential", site=site, ref=ref or None, password_ref=password_ref or None, submit=submit)
     )
@@ -242,26 +374,54 @@ def fill_credential(site: str, ref: str = "", password_ref: str = "", submit: bo
 
 @mcp.tool()
 def list_downloads() -> str:
-    """Full paths of files downloaded in this session."""
-    _ensure()
-    assert _S.session
-    return "\n".join(str(p) for p in _S.session.downloads) or "(no downloads yet)"
+    """List the full local paths of files the browser downloaded in this session, newest last.
+
+    Use the returned path with launch to open a downloaded file in its desktop app, or to tell the user where it is.
+    Returns '(no downloads yet)' when nothing has been downloaded.
+    """
+
+    def body() -> str:
+        _ensure()
+        assert _S.session
+        return "\n".join(str(p) for p in _S.session.downloads) or "(no downloads yet)"
+
+    return _W.call(body)
 
 
 @mcp.tool()
 def list_skills() -> str:
-    """Learned skills that can be replayed without an LLM."""
-    _ensure()
-    assert _S.agent
-    rows = [
-        f"{s.name}: {s.description} ({len(s.steps)} steps, {s.successes}/{s.runs} ok)" for s in _S.agent.store.all()
-    ]
-    return "\n".join(rows) or "(no skills)"
+    """List the skills learned from earlier successful runs: name, task description, step count and success record.
+
+    A skill is a recorded cross-environment procedure that replay_skill can execute without a model. Check this before
+    planning a task from scratch; if a listed description matches the task, replay it.
+    """
+
+    def body() -> str:
+        _ensure()
+        assert _S.agent
+        rows = [
+            f"{sk.name}: {sk.description} ({len(sk.steps)} steps, {sk.successes}/{sk.runs} ok)"
+            for sk in _S.agent.store.all()
+        ]
+        return "\n".join(rows) or "(no skills)"
+
+    return _W.call(body)
 
 
 @mcp.tool()
-def replay_skill(name: str, start_url: str = "") -> str:
-    """Replay a learned skill step by step without an LLM; returns the trail and where it stopped, if it did."""
+def replay_skill(
+    name: Annotated[str, Field(description="Skill name exactly as printed by list_skills.")],
+    start_url: Annotated[
+        str, Field(description="Optional URL to open before replaying, when the skill starts on a web page.")
+    ] = "",
+) -> str:
+    """Execute a learned skill step by step without a model and report what happened.
+
+    Each step re-finds its target by role and name on the current screen; values the skill learned from a page are
+    re-read from the current page. The first line says whether all steps ran or at which step replay stopped and why,
+    followed by a short trail of what was seen after each step and a fresh observation. If replay stopped, continue the
+    task from the current state with the other tools.
+    """
     return _W.call(_replay_now, name, start_url)
 
 
