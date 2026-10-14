@@ -1,0 +1,64 @@
+# Cross-boundary evaluation tasks. Each one starts in the browser and has to
+# finish outside it (or the other way round). Run them all with:
+#     bridgeagent eval                 (skills on: first pass learns, second pass replays)
+#     bridgeagent eval --no-skills     (pure LLM baseline)
+# Tasks are local and reproducible: file:// pages under tasks/pages/, built-in
+# Windows apps, no accounts.
+#
+# judge: "summary contains <text>" | "file exists <path relative to the run dir>" | omitted = manual
+#
+# Why no "Ctrl+S Save As" or "Ctrl+O" task in the browser: under a Playwright-
+# launched Chrome those shortcuts open no native dialog (verified 2026-10-15).
+# Native dialogs of *other* apps are fine.
+
+- id: calculator-from-web
+  start_url: file:///D:/Desktop/Web-agent/tasks/pages/numbers.html
+  task: Read the two numbers on the page, add them using the Windows Calculator app, and report the result. Close the calculator when you are done.
+  boundary: browser -> calculator (UWP, hosted by ApplicationFrameHost)
+  judge: summary contains 6912
+
+- id: print-dialog
+  start_url: file:///D:/Desktop/Web-agent/tasks/pages/report.html
+  task: Open the print dialog with Ctrl+P, tell me which printer destination is selected, then cancel the print dialog without printing.
+  boundary: Chrome dialog outside the page DOM
+  judge: summary contains Print to PDF
+
+- id: login-with-broker
+  start_url: file:///D:/Desktop/Web-agent/tasks/pages/login.html
+  sites: [demo-site]
+  task: Log in using the stored credential for demo-site and report the welcome message shown after login.
+  boundary: browser + OS keyring (the LLM never sees the password)
+  judge: summary contains Welcome, demo_user
+  setup: bridgeagent cred set demo-site   (the eval harness expects it to exist)
+
+- id: notification-interrupt
+  start_url: file:///D:/Desktop/Web-agent/tasks/pages/report.html
+  task: Click the Run button on the page and report what the page shows afterwards.
+  boundary: browser, with a Windows toast stealing focus mid-task
+  interrupt: {after_s: 4, title: "BridgeAgent eval", body: "focus interrupt test"}
+  judge: summary contains clicked
+
+- id: settings-lookup
+  task: Open Windows Settings, go to System > About, and report the device name shown there.
+  boundary: desktop only (UWP Settings app, control task with no browser handoff)
+  judge: summary contains $HOSTNAME
+
+- id: explorer-rename
+  start_url: file:///D:/Desktop/Web-agent/tasks/pages/report.html
+  task: Download the CSV report from this page, then open the downloads folder in File Explorer and rename the downloaded file to report-2026.csv.
+  boundary: browser -> explorer
+  judge: file exists downloads/report-2026.csv
+
+- id: notepad-roundtrip
+  start_url: file:///D:/Desktop/Web-agent/tasks/pages/numbers.html
+  task: Open Notepad, create a new tab with Ctrl+N, type the heading of the web page into it, then open Notepad's Save As dialog with Ctrl+Shift+S, report the default file name it proposes, and cancel the dialog. Do not save anything and do not close Notepad.
+  boundary: browser -> notepad -> native Save As dialog (#32770)
+  judge: summary contains .txt
+  note: Windows 11 Notepad restores previous tabs; the task is phrased to leave them alone.
+
+- id: csv-to-excel
+  start_url: file:///D:/Desktop/Web-agent/tasks/pages/report.html
+  task: Download the CSV report from this page, open it in Excel, and tell me the value in cell B2.
+  boundary: browser -> explorer/excel
+  judge: summary contains 4217
+  requires: Excel installed

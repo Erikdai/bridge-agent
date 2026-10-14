@@ -1,0 +1,41 @@
+[project]
+name = "bridgeagent"
+version = "0.1.0a1"
+description = "Give your web agent access to Windows: deterministic routing between the page DOM and Windows UI Automation"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Chengxiao Dai" }]
+requires-python = ">=3.11"
+keywords = ["agent", "browser-automation", "windows", "ui-automation", "playwright", "mcp"]
+dependencies = [
+  "anthropic>=1.13",
+  "openai>=3",
+  "playwright>=1.64",
+  "uiautomation>=2.0.29; sys_platform == 'win32'",
+  "pydantic>=2",
+  "python-dotenv",
+  "psutil",
+  "keyring",
+  "pyyaml",
+  "mcp>=1.2",
+]
+
+[project.optional-dependencies]
+gui = ["PySide6>=6.6"]
+dev = ["pytest", "ruff"]
+
+[project.urls]
+Repository = "https://github.com/Erikdai/bridge-agent"
+
+[project.scripts]
+bridgeagent = "bridgeagent.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120

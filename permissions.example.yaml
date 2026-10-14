@@ -1,0 +1,37 @@
+# Copy to permissions.yaml (auto-loaded) or point BRIDGE_PERMISSIONS at it.
+# Every list is optional; an empty or missing list means "no restriction" on that axis.
+# Enforcement happens in the executor, not in the prompt: a blocked action never runs,
+# the model is told why, and every decision is appended to the audit log.
+
+confirm: risky            # never | risky | always  (overrides BRIDGE_CONFIRM)
+
+allowed_apps:             # what `launch` may start: program names without .exe, or URI schemes
+  - calc
+  - notepad
+  - explorer
+  - excel
+  - "ms-settings:"      # quote URI schemes: a bare trailing colon is a YAML mapping
+denied_apps:              # always refused, even if listed above
+  - powershell
+  - cmd
+  - regedit
+  - wscript
+
+allowed_dirs:             # files/folders the agent may open; the current run's downloads folder is always allowed
+  - D:\Desktop\Web-agent\runs
+  - D:\Desktop\Web-agent\tasks
+
+denied_windows:           # regexes on "window title process/class": the agent never clicks or types there
+  - Weixin
+  - WeChat
+  - Outlook
+  - Feishu
+
+denied_url_patterns:      # the agent may not navigate to these
+  - "bank"
+  - "paypal\\.com"
+
+sites:                    # credential site keys usable even when the task did not pass --site
+  - demo-site
+
+audit_log: runs/audit.jsonl

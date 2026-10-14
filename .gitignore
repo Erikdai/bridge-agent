@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+runs/
+skills_store/
+*.egg-info/
+.pytest_cache/
+permissions.yaml
+@AutomationLog.txt

@@ -1,0 +1,12 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Invoice Upload</title></head>
+<body>
+<h1>Upload an invoice</h1>
+<form onsubmit="event.preventDefault();
+  var f = document.getElementById('file').files[0];
+  document.getElementById('msg').textContent = f ? ('Saved. Confirmation #' + Math.floor(1000 + Math.random()*9000) + ' for ' + f.name) : 'No file chosen.';">
+  <label for="file">Invoice file</label><input id="file" name="file" type="file">
+  <button type="submit">Save entry</button>
+</form>
+<p id="msg"></p>
+</body></html>

@@ -1,0 +1,13 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Demo Login</title></head>
+<body>
+<h1>Demo Login</h1>
+<form onsubmit="event.preventDefault();
+  var u = document.getElementById('u').value, p = document.getElementById('p').value;
+  document.getElementById('msg').textContent = (p === 'demo-pass-123') ? ('Welcome, ' + u + '!') : 'Invalid password.';">
+  <label for="u">Username</label><input id="u" name="username">
+  <label for="p">Password</label><input id="p" name="password" type="password">
+  <button type="submit">Sign in</button>
+</form>
+<p id="msg"></p>
+</body></html>
