@@ -128,7 +128,6 @@ class Window(QMainWindow):
             self._label("One task across the browser and Windows. Risky actions ask you first.", "subtitle")
         )
         header.addLayout(titles, 1)
-        )
 
         task_card = self._card()
         task_card.layout().addWidget(self._label("TASK", "section"))
