@@ -10,8 +10,9 @@ English | [中文](README.zh-CN.md)
 
 **Give your web agent access to Windows.**
 
-BridgeAgent is a browser-first AI agent for Windows. It reads the page through the DOM and reads native windows through
-Windows UI Automation, and switches between the two by a deterministic rule, not by the model. A task can start on a web
+BridgeAgent is an AI agent that treats the browser and the Windows desktop as one workspace. It reads web pages
+through the DOM and native windows through Windows UI Automation, and switches between the two by a deterministic rule,
+not by the model. A task can start on a web
 page, continue in Explorer, Calculator, a dialog or any native app, and come back.
 
 Status: alpha. Windows 11, Python 3.11+. Tested with DeepSeek through an OpenAI-compatible endpoint; the Anthropic
