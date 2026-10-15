@@ -15,8 +15,8 @@ through the DOM and native windows through Windows UI Automation, and switches b
 not by the model. A task can start on a web
 page, continue in Explorer, Calculator, a dialog or any native app, and come back.
 
-Status: alpha. Windows 11, Python 3.11+. Tested with DeepSeek through an OpenAI-compatible endpoint. The Anthropic
-backend is wired but untested.
+Status: alpha. Windows 11, Python 3.11+. Tested with DeepSeek through an OpenAI-compatible endpoint and with Claude
+through the Anthropic API.
 
 
 ## Why
@@ -111,8 +111,9 @@ sites the agent may touch. Every action is appended to `runs/audit.jsonl`.
 
 ## Evidence
 
-- `docs/EVAL.md`: three passes over eight cross-boundary tasks (first contact 8/8, pure replay for most tasks at one
-  model call), a real Explorer-to-web upload workflow, and a ten-scenario deterministic matrix (`scripts/bridge_matrix.py`)
+- `docs/EVAL.md`: three passes over eight cross-boundary tasks with DeepSeek (first contact 8/8, pure replay for most
+  tasks at one model call), two Claude passes comparing tree-only with tree-plus-screenshot observation (7/8 and 8/8,
+  screenshots added cost but no fewer steps), a real Explorer-to-web upload workflow, and a ten-scenario deterministic matrix (`scripts/bridge_matrix.py`)
   covering DOM-UIA-DOM transitions, Chrome in-window dialogs, focus hijacking before and after observation, refusal when the
   target window is gone, LLM-free replay and 40 consecutive MCP calls. Small samples, not reliability statistics.
 - `docs/RELATED_WORK.md`: how this compares with UFO2, Agent S2, browser-use and RPA tools.
@@ -123,7 +124,7 @@ sites the agent may touch. Every action is appended to `runs/audit.jsonl`.
 - Chrome dialog detection relies on Chrome's view class names and may need updating across Chrome versions.
 - Skill matching is keyword overlap, and parameterization covers typed text and download paths, not file choices such as
   "the newest file".
-- Screenshot fallback for sparse trees needs a vision-capable model.
+- Screenshot fallback for sparse trees needs a vision-capable model. `BRIDGE_SCREENSHOTS=never|sparse|always` picks the policy.
 
 ## License
 

@@ -251,7 +251,8 @@ def _activate_or_tab(page, activate: Callable[[], bool] | None) -> ExecResult:
     if activate is not None and activate():
         return ExecResult(ok=True)
     if page is None:
-        return ExecResult(ok=False, message="no browser attached")
+        why = "could not bring the browser window to the front" if activate else "no browser attached"
+        return ExecResult(ok=False, message=why)
     page.bring_to_front()
     return ExecResult(ok=True, message="switched tab; window may still be behind another app")
 

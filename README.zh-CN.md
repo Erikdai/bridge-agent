@@ -12,7 +12,7 @@
 
 BridgeAgent 是一个把浏览器和 Windows 桌面当成同一个工作空间的 AI agent。网页通过 DOM 读取，原生窗口通过 Windows UI Automation 读取，两者之间的切换由程序规则判定，不由模型判定。任务可以从网页开始，进入资源管理器、计算器、对话框或任何原生应用，再回到网页。
 
-状态：alpha。Windows 11，Python 3.11 以上。用 DeepSeek（OpenAI 兼容接口）实测，Anthropic 后端已接入但未测试。
+状态：alpha。Windows 11，Python 3.11 以上。用 DeepSeek（OpenAI 兼容接口）和 Claude（Anthropic API）实测。
 
 ## 为什么做
 
@@ -87,7 +87,7 @@ bridgeagent mcp                  # 作为 MCP server 提供执行层
 
 ## 证据
 
-- `docs/EVAL.md`：8 个跨边界任务三轮评测、一个真实的资源管理器到网页上传工作流、十场景确定性矩阵（`scripts/bridge_matrix.py`）。样本小，不是可靠性统计。
+- `docs/EVAL.md`：8 个跨边界任务用 DeepSeek 跑三轮（首次接触 8/8，多数任务一次模型调用纯回放）、用 Claude 跑两轮对比“只给树”和“树加截图”（7/8 和 8/8，截图只增加成本没减少步数）、一个真实的资源管理器到网页上传工作流、十场景确定性矩阵（`scripts/bridge_matrix.py`）。样本小，不是可靠性统计。
 - `docs/RELATED_WORK.md`：与 UFO2、Agent S2、browser-use 和 RPA 工具的比较。
 
 ## 局限
@@ -95,7 +95,7 @@ bridgeagent mcp                  # 作为 MCP server 提供执行层
 - 仅 Windows。Excel 网格对 UIA 只暴露可见表头，不支持读单元格。
 - Chrome 对话框识别依赖 Chrome 的视图类名，Chrome 升级后可能要更新。
 - 技能匹配是关键词重叠，参数化只覆盖输入文本和下载目录，不覆盖“最新的文件”这类选择。
-- 稀疏树的截图兜底需要能看图的模型。
+- 稀疏树的截图兜底需要能看图的模型。`BRIDGE_SCREENSHOTS=never|sparse|always` 选择策略。
 
 ## 许可证
 

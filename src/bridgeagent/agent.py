@@ -12,6 +12,7 @@ repaired step sequence is written back, so the next run is cheap again.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import re
 import time
@@ -259,6 +260,10 @@ class Agent:
             return restored
         return focus
 
+    def _wants_screenshot(self, obs: Observation) -> bool:
+        mode = self.settings.screenshots
+        return mode == "always" or (mode == "sparse" and obs.interactive_count() < SPARSE_TREE_THRESHOLD)
+
     def observe(self, session: BrowserSession) -> tuple[Focus, Observation]:
         focus = self._focus_guard(session, get_focus())
         if focus.kind == "browser" and focus.pid != session.browser_pid():
@@ -294,10 +299,13 @@ class Agent:
                     f'Chrome dialog "{title}" is open on top of the page; its controls are the d refs below '
                     f"and are NOT part of the page DOM. Deal with it first."
                 )
+            if self.settings.screenshots == "always":
+                with contextlib.suppress(Exception):
+                    obs.screenshot_png = session.page.screenshot()
             return focus, obs
         try:
             obs = observe_desktop()
-            if obs.interactive_count() < SPARSE_TREE_THRESHOLD:
+            if self._wants_screenshot(obs):
                 obs = observe_desktop(with_screenshot=True)
         except Exception as e:
             obs = Observation(

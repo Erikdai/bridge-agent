@@ -21,6 +21,7 @@ class Settings:
     confirm_timeout: int = 60  # seconds before an unanswered confirmation counts as "No"
     skills_dir: str = "skills_store"
     permissions_file: str | None = None  # YAML manifest; defaults to ./permissions.yaml when present
+    screenshots: str = "sparse"  # never | sparse (only when a desktop tree is nearly empty) | always
 
 
 def load_settings() -> Settings:
@@ -51,4 +52,5 @@ def load_settings() -> Settings:
             os.getenv("BRIDGE_PERMISSIONS", "").strip()
             or ("permissions.yaml" if os.path.exists("permissions.yaml") else None)
         ),
+        screenshots=os.getenv("BRIDGE_SCREENSHOTS", "sparse").strip().lower() or "sparse",
     )

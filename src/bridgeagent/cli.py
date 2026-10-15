@@ -16,6 +16,8 @@ def _agent(args):
         os.environ["BRIDGE_CONFIRM"] = args.confirm
     if getattr(args, "confirm_timeout", None):
         os.environ["BRIDGE_CONFIRM_TIMEOUT"] = str(args.confirm_timeout)
+    if getattr(args, "screenshots", None):
+        os.environ["BRIDGE_SCREENSHOTS"] = args.screenshots
     settings = load_settings()
     planner = make_planner(settings)
     print(
@@ -256,6 +258,7 @@ def main(argv: list[str] | None = None) -> int:
     e.add_argument("--no-skills", action="store_true")
     e.add_argument("--confirm", choices=["never", "risky", "always"], default=None)
     e.add_argument("--confirm-timeout", type=int, default=None)
+    e.add_argument("--screenshots", choices=["never", "sparse", "always"], default=None)
     e.set_defaults(fn=cmd_eval)
 
     args = p.parse_args(argv)
