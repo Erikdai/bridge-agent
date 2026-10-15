@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import os
 
 import anthropic
 
@@ -9,7 +10,9 @@ from .base import Decision, PlannerRefused
 
 class AnthropicPlanner:
     def __init__(self, model: str = "claude-opus-5-5", effort: str = "medium"):
-        self.client = anthropic.Anthropic()
+        workspace = os.getenv("ANTHROPIC_WORKSPACE_ID", "").strip()
+        headers = {"anthropic-workspace-id": workspace} if workspace else None
+        self.client = anthropic.Anthropic(default_headers=headers)
         self.model = model
         self.effort = effort
 

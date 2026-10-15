@@ -19,6 +19,16 @@ Status: alpha. Windows 11, Python 3.11+. Tested with DeepSeek through an OpenAI-
 backend is wired but untested.
 
 
+## Why
+
+| Pain point today | What BridgeAgent does |
+|---|---|
+| Browser agents (browser-use, Playwright MCP) stop at the edge of the page. A file picker, a Save dialog, a downloaded file that must be opened in a desktop app, and the agent is blind. | The same loop keeps going. The native window becomes the observation and the task continues there. |
+| Desktop agents (UFO2, computer-use) treat the browser as pixels or a flat control tree, so page content is read slowly, lossily and at screenshot prices. | Pages are read through the DOM and native windows through UI Automation, each with the observer that fits it. |
+| Handing the model two tool sets and letting it pick one leads to clicks on the wrong surface and keystrokes in the wrong window. | A program rule based on keyboard focus decides which observer and executor run. The model only picks the next action. |
+| Every repeat of the same task pays for the whole model loop again. | A successful run becomes a skill that replays without a model and is repaired by the model only when the UI changes. |
+| An agent that can reach the desktop can also pay, delete, send and read passwords out of the conversation. | A permission manifest, a native confirmation box for risky actions, passwords served from the OS keyring and an audit log. |
+
 ## What it does
 
 - **One tree for two worlds.** Page elements get `b` refs (Playwright), native controls get `d` refs (UI Automation).
