@@ -24,6 +24,7 @@ from typing import Annotated
 from mcp.server.mcpserver import MCPServer
 from pydantic import Field
 
+from . import __version__
 from .actions import Action, BrowserExecutor, DesktopExecutor, ExecResult, dispatch
 from .agent import DOWNLOADS_PLACEHOLDER, Agent, BrowserSession
 from .config import Settings, load_settings
@@ -33,6 +34,8 @@ from .tree import Observation
 
 mcp = MCPServer(
     "bridgeagent",
+    version=__version__,
+    website_url="https://github.com/Erikdai/bridge-agent",
     instructions=(
         "Tools to operate a Windows PC across the browser boundary. Call observe first; it returns one "
         "accessibility tree for whatever has keyboard focus (web page with b-refs, or native window with "
